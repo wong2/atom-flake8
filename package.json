@@ -1,0 +1,16 @@
+{
+  "name": "atom-flake8",
+  "main": "./lib/index",
+  "version": "0.0.1",
+  "private": false,
+  "description": "Atom package for flake8",
+  "repository": "https://github.com/wong2/atom-flake8",
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {
+    "emissary": "1.x",
+    "underscore-plus": "1.x"
+  }
+}
