@@ -1,7 +1,7 @@
 {
   "name": "atom-flake8",
   "main": "./lib/index",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": false,
   "description": "Atom package for flake8",
   "repository": "https://github.com/wong2/atom-flake8",
