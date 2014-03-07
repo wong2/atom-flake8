@@ -1,6 +1,7 @@
-{$, BufferedProcess} = require 'atom'
+{$} = require 'atom'
 {Subscriber} = require 'emissary'
 _ = require 'underscore-plus'
+{exec} = require 'child_process'
 
 class PyFlake8
 
@@ -15,26 +16,19 @@ class PyFlake8
     @unsubscribe
 
   handleEvents: (editor) =>
-    @subscribe atom.workspaceView, 'pane-container:active-pane-item-changed', =>
-      @run(editor)
-
     buffer = editor.getBuffer()
-    @subscribe buffer, 'saved', =>
-      buffer.transact => @run(editor)
-    @subscribe buffer, 'destroyed', =>
-      @unsubscribe buffer
+    events = 'saved contents-modified'
+    @unsubscribe buffer
+    @subscribe buffer, events, _.debounce((=> @run(editor)), 50)
 
   run: (editor) =>
-    file_path = editor.getUri()
-    if not _.endsWith file_path, '.py'
-      return
+    return if editor.getGrammar().name isnt 'Python'
 
     split = @SPLITTER
-    command = 'flake8'
-    args = ["--format=%(row)s#{split}%(code)s#{split}%(text)s", file_path]
+    command = "flake8 '--format=%(row)s#{split}$(code)s#{split}%(text)s' -"
     options = if @PATH then {env: {@PATH}} else {}
 
-    stdout = stderr = (output) =>
+    handleOutput = (output) =>
       errors = @parsePyFlake8Output output
       if errors.length
         @updateGutter errors
@@ -46,10 +40,15 @@ class PyFlake8
       else
         @resetState()
 
-    exit = (code) =>
-      @resetState() if code == 0
+    editorView = atom.workspaceView.getActiveView()
+    editorView.resetDisplay();
+    editorView.gutter.find('atom-pyflakes-error').removeClass('atom-pyflakes-error')
 
-    process = new BufferedProcess({command, args, options, stdout, stderr, exit})
+    flake8 = exec command, options, (error, stdout, stderr) ->
+      @resetState() unless error
+      handleOutput stdout
+      handleOutput stderr
+    flake8.stdin.end editor.getText()
 
   parsePyFlake8Output: (output) ->
     output = $.trim(output)
@@ -86,12 +85,11 @@ class PyFlake8
     atom.workspaceView.statusBar.appendLeft html
 
   updateGutter: (errors) ->
-    atom.workspaceView.eachEditorView (editorView) ->
-      if editorView.active
-        gutter = editorView.gutter
-        gutter.removeClassFromAllLines 'atom-pyflakes-error'
-        errors.forEach (error) ->
-          gutter.addClassToLine error.row - 1, 'atom-pyflakes-error'
+    editor = atom.workspace.getActiveEditor()
+    editorView = atom.workspaceView.getActiveView()
+    gutter = editorView.gutter
+    errors.forEach (error) ->
+      gutter.addClassToLine error.row - 1, 'atom-pyflakes-error'
 
 
 Subscriber.includeInto PyFlake8
