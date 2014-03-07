@@ -7,6 +7,7 @@ class PyFlake8
   SPLITTER: '@#@'
 
   constructor: ->
+    @PATH = atom.config.get('flake8.PATH')
     atom.workspace.eachEditor (editor) =>
       @handleEvents editor
 
@@ -31,7 +32,8 @@ class PyFlake8
     split = @SPLITTER
     command = 'flake8'
     args = ["--format=%(row)s#{split}%(code)s#{split}%(text)s", file_path]
-    
+    options = if @PATH then {env: {@PATH}} else {}
+
     stdout = stderr = (output) =>
       errors = @parsePyFlake8Output output
       if errors.length
@@ -47,7 +49,7 @@ class PyFlake8
     exit = (code) =>
       @resetState() if code == 0
 
-    process = new BufferedProcess({command, args, stdout, stderr, exit})
+    process = new BufferedProcess({command, args, options, stdout, stderr, exit})
 
   parsePyFlake8Output: (output) ->
     output = $.trim(output)
