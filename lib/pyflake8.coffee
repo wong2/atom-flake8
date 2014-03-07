@@ -44,7 +44,7 @@ class PyFlake8
     editorView.resetDisplay();
     editorView.gutter.find('atom-pyflakes-error').removeClass('atom-pyflakes-error')
 
-    flake8 = exec command, options, (error, stdout, stderr) ->
+    flake8 = exec command, options, (error, stdout, stderr) =>
       @resetState() unless error
       handleOutput stdout
       handleOutput stderr
