@@ -8,7 +8,7 @@ class PyFlake8
   SPLITTER: '@#@'
 
   constructor: ->
-    @PATH = atom.config.get('flake8.PATH')
+    @PATH = atom.config.get('flake8.PATH') ? process.env.PATH
     atom.workspace.eachEditor (editor) =>
       @handleEvents editor
 
@@ -26,7 +26,7 @@ class PyFlake8
 
     split = @SPLITTER
     command = "flake8 '--format=%(row)s#{split}$(code)s#{split}%(text)s' -"
-    options = if @PATH then {env: {@PATH}} else {}
+    options = {env: {@PATH}}
 
     handleOutput = (output) =>
       errors = @parsePyFlake8Output output
